@@ -76,13 +76,13 @@ end
 
 desc "open the queue"
 task "midburn:open_queue" do
-  Resque.redis.set "queue_is_open", "true"
+  Resque.redis.set ENV["QUEUE_IS_OPEN_REDIS_KEY"], "true"
   puts "done!"
 end
 
 desc "close the queue"
 task "midburn:close_queue" do
-  Resque.redis.set "queue_is_open", "false"
+  Resque.redis.set ENV["QUEUE_IS_OPEN_REDIS_KEY"], "false"
   puts "done!"
 end
 
