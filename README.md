@@ -39,7 +39,7 @@ In order to get into the queue, a web client will submit a web form. Typically, 
 ```json
 {
   "firstname": "John",
-  "firstname": "Doe",
+  "lastname": "Doe",
   "email": "john.doe@email.com"
 }
 ```
@@ -73,7 +73,10 @@ For full list, see: [.env-example file!](./.env-example)
 
 To control a running instance of the queue, simply execute one of the following [rake](https://github.com/ruby/rake) tasks.
 
-> **NOTICE Heroku Users:** to execute a rake command on heroku, make sure you install [Heroku's Toolbelt](https://toolbelt.heroku.com/), login using: `heroku login` and then execute one of the above commands using: `heroku run`, For example: `heroku run bundle exec rake midburn:open_queue`
+> **NOTICE Heroku Users:** to execute a rake command on heroku, make sure you install [Heroku's Toolbelt](https://toolbelt.heroku.com/), login using: `heroku login` and then execute one of the above commands using: `heroku run`, For example:
+```
+heroku run bundle exec rake midburn:open_queue
+```
 
 #### Frequently Used Tasks
 
@@ -97,7 +100,7 @@ For local development:
 - Run `bundle install` to install dependencies.
 - Run server using: `bundle exec puma -p 3000 -C puma.rb`
 
-> **NOTICE**: use the `MIN_THREADS` & `MAX_THREADS` to set the number of puma threads to run on each api instance. For our need and since concurrency *was not* a concern with this simple solution & for our infrastructure, we found that each server may run very high (60+) amount of threads.
+> **NOTICE**: use the `MIN_THREADS` & `MAX_THREADS` env variables to set the number of puma threads to run on each api instance. For our need and since concurrency *was not* a concern with this simple solution & for our infrastructure, we found that each server may run very high (60+) amount of threads.
 
 ##### Redis Server
 
@@ -109,7 +112,7 @@ Once installed, configure the `REDIS_URL` env variable to your server (for examp
 
 For local development, we use the [dotenv gem](https://github.com/bkeepers/dotenv). copy `.env-example` to `.env` and configure the variables for your need.
 
-For production needs, follow your environment's best practices.
+For production needs, follow your environment's best practices. For example, see Heroku's [Configuration and Config Vars](https://devcenter.heroku.com/articles/config-vars) & Amazon's EC2 [Using Environment Variables](http://docs.aws.amazon.com/opsworks/latest/userguide/apps-environment-vars.html).
 
 ### CONTRIBUTING
 
