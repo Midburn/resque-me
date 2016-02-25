@@ -1,108 +1,122 @@
 # Midburn Tickets Queue
 
-### What is this?
+*Midburn Queue* is a ticket queuing system for the Midburn Organization.
 
-This is Midburn's tickets processing queue. Each batch of order requests submitters (say 100 orders) will be enqueue into an ordered queue (say: tier_001) which will be processed later by a worder.
+###### About Midburn
+Midburn is the fastest growing Burning Man regional in the world, taking place every May in the [Negev desert](https://en.wikipedia.org/wiki/Negev) of Israel. To learn more about the Midburn organization, [please read this](http://midburn.org/en-event/).
 
-Navigate to `/resque` to follow processing order (or clearing past tasks).
+###### About the Solution
+As a fast growing festival we 'suffer' for a high tickets demand, which made us to implement a **smart, transparent and equal as possible** solution.
 
-Submit a new order by `POST /enqueue` with a JSON file and `Content-Type: application/json`. The following curl command will work:
+The idea is simple: At the announced tickets sale date, participants are requested to navigate to a website (normally [queue.midburn.org](queue.midburn.org)) and wait for the queue to open. Once the queue is open, the site will automatically redirect the client to the register page to fill a basic form containing the user profile's email. On submission, as long as the queue is open, the requester will get in line for the next stage. Users in line, on their turn, will receive an email with a purchase link outside of the tickets queue implementation. *Important:* Getting in line does not guarantee a ticket. Tickets are been sold separately and the line will be closed once decided by the ticket sales admins.
 
-```
-curl -X POST http://midburn-tickets-queue.herokuapp.com/enqueue -d '{"firstname": "elad", "lastname": "gariany", "email":"email@gmail.com"}' --header "Content-Type: application/json"
-```
+###### Technology Stack
 
-### Application Routes
+Midburn Queue web backend is based on [Sinatra](http://sinatrarb.com/). The queue database is based on [Resque](https://github.com/resque/resque) and [Redis](http://redis.io/).
 
-Sinatra web controller code:
+### Application Routes/Configuration
 
-### GET '/'
-This service have no root route, requests will be redirected to midburn.org
+As common with typical modern REST APIs, all requests are expected to include a `Content-Type: application/json` header, other requests may be rejected or just ignored.
 
-```ruby
-get '/' do
-  redirect "http://midburn.org"
-end
-```
+In order to protect the API from scripts/robots, many of the apps configurations, routes & responses are defined using environment variables and may vary for each sale/deployment. This methodology allow us having open-source transparent solution while keep us protected from people who try to sneak into the queue. We have great ideas on how to better protect the queue, but the current solution was sufficient for our 2016 needs; nevertheless, [we would love your contribution!](./CONTRIBUTING.md)
 
-### GET /resque
-The resque-web web interface to monitor progress of tasks.
-- /resque/queues/worker - The `worker` queue
-- /resque/working - Current worker processes (chewing on the `worker` queue)
+##### POST /status
 
-Notice: In order to access the monitor you will need to set env values `RESQUE_WEB_HTTP_BASIC_AUTH_USER` and `RESQUE_WEB_HTTP_BASIC_AUTH_PASSWORD`. If those will not be provided the interface will be open to everyone.
+The `/status` methods will reply back to clients about the status of the queue. If the queue is close, the api will reply back with a `403` HTTP code (Forbidden).
 
-### POST '/big-reset'
-
-Big reset will reset all the queues and 'tasks' (process orders). This should be perform before each sell.
-
-```ruby
-post '/big-reset' do
-  # assuming ENV['ADMIN_SECRET_TOKEN'] is correct, reset all queues
-end
+Once the queue opens, the api will reply with the registration page.
+```json
+{
+  "register_page": "register.html"
+}
 ```
 
-###### Params
-`admin_secret_token` - the environment's admin secret key
+> **NOTICE:** the registration page may dynamically be set with the `REGISTER_FORM_URL` env variable. If not defined, the API will default to `register.html`
 
+##### POST /register
 
-### POST '/enqueue'
-
-Enqueue new order to process.
-
-```ruby
-post '/enqueue' do
-  # calculate tier number using ENV["QUEUE_TIER_SIZE"], the amount of tasks on queues and completed tasks.
-  # Add a new task to order on the relevant queue.
-end
+In order to get into the queue, a web client will submit a web form. Typically, the form will include the following data:
+```json
+{
+  "firstname": "John",
+  "lastname": "Doe",
+  "email": "john.doe@email.com"
+}
 ```
 
-The following `curl` command will queue a new order to process:
+If the queue is open, the requester's email will get into the queue. If the queue is close, the requester's email will be added to a special list of banned emails, since when using the web client, it should not be possible to fill out the form before the queue is open.
+
+> **NOTICE:** the `POST /register` route is a dynamically changeable route defined by the `REGISTER_ROUTE` env variable. If not defined, the route will default to `/register`
+
+##### Env Variables
+
 ```
-curl -X POST http://midburn-tickets-queue.herokuapp.com/enqueue -d '{"firstname": "elad", "lastname": "gariany", "email":"email@gmail.com"}' --header "Content-Type: application/json"       
+# REDIS connection string
+REDIS_URL="redis://localhost:6379/"
+
+# AWS Credentials
+AWS_ACCESS_KEY_ID="ABCDEFGHIJKLMNOPQRST"
+AWS_SECRET_ACCESS_KEY="A1b2C3D4/e5-f6g7j2K2x2i13n1+0x21xp7Ux-sl"
+
+# Queue lists will be stored on the following:
+AWS_RESULTS_BUCKET="my-s3-bucket"
+AWS_REGION="eu-west-1"
+
+# Redis key to set the queue status
+QUEUE_IS_OPEN_REDIS_KEY="queue_is_open"
+```
+For full list, see: [.env-example file!](./.env-example)
+
+> **NOTICE:** This list might not be up to date. Nevertheless, .env-example should always be updated to the most recent env changes.
+
+### Controlling the Queue
+
+To control a running instance of the queue, simply execute one of the following [rake](https://github.com/ruby/rake) tasks.
+
+> **NOTICE Heroku Users:** to execute a rake command on heroku, make sure you install [Heroku's Toolbelt](https://toolbelt.heroku.com/), login using: `heroku login` and then execute one of the above commands using: `heroku run`, For example:
+```
+heroku run bundle exec rake midburn:open_queue
 ```
 
-##### Params
-- `firstname` - Submitter's first name.
-- `lastname` - Submitter's last name.
-- `email` - Submitter's email address (profile on profile.midburn.org)
+#### Frequently Used Tasks
 
-### Known Issues
-- Orders in the system are limited to 500 * QUEUE_TIER_SIZE (say, 50,000 in case each tier size is 100).
-
-### Worker code
-```ruby
-
-def process_order(json = {"firstname":"elad","lastname":"gariany","email":"elad@gariany.com"})
-  # process order
-  # - validate with profile system, to confirm user have a profile
-  # - generate the email to be send to a client
-  # - send the email for purchase
-end
-
-class OrderTier_1
-  @queue = :tier_001
-  def self.perform(json)
-    process_order(JSON.parse(json))
-  end
-end
+```
+bundle exec rake midburn:open_queue    # open the queue
+bundle exec rake midburn:close_queue   # close the queue
+bundle exec rake midburn:list          # Get List in CSV format
+bundle exec rake midburn:reset         # Reset the queue completely
 ```
 
-## Configuration (Heroku)
-1. Close the queue:
-`heroku run bundle exec rake midburn:close_queue --app midburn-queue`
+To get a full list of the available tasks, run `bundle exec rake -T midburn` and look for the
 
-2. Open the queue:
-`heroku run bundle exec rake midburn:open_queue  --app midburn-queue`
+### Deployment
 
-3. Getting the list of emails in the queue
-`heroku run bundle exec rake midburn:list --app midburn-queue`
+##### API Endpoints
 
-4. Reset queue:
-`heroku run bundle exec rake midburn:reset --app midburn-queue`
+This is a simple [Sinatra](http://sinatrarb.com/) application. Please follow Sinatra's recommendation on how to deploy the app ([The Sinatra Book](http://sinatra-org-book.herokuapp.com/#toc_41)).
 
-5. Checking the heroku logs:
-`heroku logs -t --app midburn-queue`
+For local development:
+- Make sure `bundle` is installed (if not follow [bundler.io](http://bundler.io/)).
+- Run `bundle install` to install dependencies.
+- Run server using: `bundle exec puma -p 3000 -C puma.rb`
+
+> **NOTICE**: use the `MIN_THREADS` & `MAX_THREADS` env variables to set the number of puma threads to run on each api instance. For our need and since concurrency *was not* a concern with this simple solution & for our infrastructure, we found that each server may run very high (60+) amount of threads.
+
+##### Redis Server
+
+Queue implementation requires a running Redis server. Follow Redis instructions on how to install Redis instance [here](http://redis.io/topics/quickstart) (If you're on a mac and using [Homebrew](http://brew.sh), simply execute `brew install redis`).
+
+Once installed, configure the `REDIS_URL` env variable to your server (for example: `REDIS_URL="redis://localhost:6379/"`)
+
+##### Set Env Variables
+
+For local development, we use the [dotenv gem](https://github.com/bkeepers/dotenv). copy `.env-example` to `.env` and configure the variables for your need.
+
+For production needs, follow your environment's best practices. For example, see Heroku's [Configuration and Config Vars](https://devcenter.heroku.com/articles/config-vars) & Amazon's EC2 [Using Environment Variables](http://docs.aws.amazon.com/opsworks/latest/userguide/apps-environment-vars.html).
+
+### CONTRIBUTING
+
+Please follow: [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## LICENSE
 The MIT License (MIT)
