@@ -1,5 +1,5 @@
 FROM ruby:2.2.3
-MAINTAINER Roey B
+MAINTAINER Midburn IT <it@midburn.org>
 
 RUN apt-get update && \
     apt-get install -y net-tools
