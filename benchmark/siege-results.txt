@@ -1,0 +1,37 @@
+Machine
+
+  Model Name:	MacBook Pro
+  Model Identifier:	MacBookPro8,3
+  Processor Name:	Intel Core i7
+  Processor Speed:	2.2 GHz
+  Number of Processors:	1
+  Total Number of Cores:	4
+  Memory:	16 GB
+
+Server
+
+Puma starting in single mode...
+* Version 2.16.0 (ruby 2.2.3-p173), codename: Midwinter Nights Trance
+* Min threads: 20, max threads: 60
+* Environment: development
+* Listening on tcp://0.0.0.0:3000
+
+
+Siege
+
+~ siege -c 250 -r 1000 -t 1M -d 1  -f urls.txt
+
+Lifting the server siege...      done.
+
+Transactions:		       26900 hits
+Availability:		      100.00 %
+Elapsed time:		       59.21 secs
+Data transferred:	        0.00 MB
+Response time:		        0.04 secs
+Transaction rate:	      454.32 trans/sec
+Throughput:		        0.00 MB/sec
+Concurrency:		       19.09
+Successful transactions:           0
+Failed transactions:	           0
+Longest transaction:	        0.47
+Shortest transaction:	        0.00
