@@ -69,7 +69,7 @@ app.post('/register', function(req, res) {
 
 		client.hset(queueName, uuid.v4(), messageJson, function(err, result) {
 
-			// console.log(result);
+			console.log(result);
 			if (err) {
 				console.error(err);
 			}
