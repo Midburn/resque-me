@@ -1,7 +1,8 @@
 # environment space
 require "sinatra"
-require 'sinatra/cross_origin'
+require "sinatra/cross_origin"
 require "dotenv"; Dotenv.load
+require "json"
 
 # application space
 require "pry"
@@ -69,7 +70,7 @@ class MidburnQueue < Sinatra::Base
 
   post "#{REGISTER_ROUTE}" do
     halt(400) if params[USERS_EMAIL_PARAM].empty?
-    order_json = %{{"ip":"#{request.ip}","timestamp":"#{Time.now.to_i}","email":"#{params[USERS_EMAIL_PARAM]}"}}
+    order_json = %{{"ip":"#{request.ip}","timestamp":"#{Time.now.to_i}","email":#{params[USERS_EMAIL_PARAM].to_json}}}
 
     if queue_is_open?
       Resque.enqueue(TicketsQueue, order_json)
