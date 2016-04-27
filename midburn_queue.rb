@@ -74,7 +74,6 @@ class MidburnQueue < Sinatra::Base
     if queue_is_open?
       Resque.enqueue(TicketsQueue, order_json)
     else
-      Resque.enqueue(BannedOrder, order_json)
       halt(403)
     end
   end
