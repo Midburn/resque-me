@@ -44,7 +44,7 @@ In order to get into the queue, a web client will submit a web form. Typically, 
 }
 ```
 
-If the queue is open, the requester's email will get into the queue. If the queue is close, the requester's email will be added to a special list of banned emails, since when using the web client, it should not be possible to fill out the form before the queue is open.
+If the queue is open, the requester's email will get into the queue. If the queue is closed, the request is ignored, as it should not be possible to fill out the form before the queue is open.
 
 
 > **NOTICE:** the `POST /register` route is a dynamically changeable route defined by the `REGISTER_ROUTE` env variable. If not defined, the route will default to `/register`. Email field name is also configurable by the `USERS_EMAIL_PARAM` env variable.
