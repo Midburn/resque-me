@@ -1,21 +1,21 @@
 # environment space
-require "sinatra"
+require 'sinatra'
 require 'sinatra/cross_origin'
-require "dotenv"; Dotenv.load
+require 'dotenv'; Dotenv.load
 
 # application space
-require "pry"
-require "redis"
-require "resque"
-require "csv"
-require "./worker.rb"
+require 'pry'
+require 'redis'
+require 'resque'
+require 'csv'
+require './worker.rb'
 
 # App Configurations
-QUEUE_IS_OPEN_REDIS_KEY     = ENV["QUEUE_IS_OPEN_REDIS_KEY"]  || "queue_is_open"
-USERS_EMAIL_PARAM           = ENV["USERS_EMAIL_PARAM"] || "email"
-REGISTER_FORM_URL           = ENV["REGISTER_FORM_URL"] || "register.html"
-ACCESS_CONTROL_ALLOW_ORIGIN = ENV["ACCESS_CONTROL_ALLOW_ORIGIN"] || "*"
-REGISTER_ROUTE              = ENV["REGISTER_ROUTE"] || "/register"
+QUEUE_IS_OPEN_REDIS_KEY     = ENV['QUEUE_IS_OPEN_REDIS_KEY']  || 'queue_is_open'
+USERS_EMAIL_PARAM           = ENV['USERS_EMAIL_PARAM'] || 'email'
+REGISTER_FORM_URL           = ENV['REGISTER_FORM_URL'] || 'register.html'
+ACCESS_CONTROL_ALLOW_ORIGIN = ENV['ACCESS_CONTROL_ALLOW_ORIGIN'] || '*'
+REGISTER_ROUTE              = ENV['REGISTER_ROUTE'] || '/register'
 
 class MidburnQueue < Sinatra::Base
   configure do
@@ -27,7 +27,7 @@ class MidburnQueue < Sinatra::Base
     condition { request.request_method == method }
   end
 
-  before :method => :post do
+  before method: :post do
     load_params
     set_response_headers
     access_log
@@ -68,8 +68,8 @@ class MidburnQueue < Sinatra::Base
   end
 
   post "#{REGISTER_ROUTE}" do
-    halt(400) if params[USERS_EMAIL_PARAM].nil?
-    order_json = %{{"ip":"#{request.ip}","timestamp":"#{Time.now.to_i}","email":"#{params[USERS_EMAIL_PARAM]}"}}
+    halt(400) unless params[USERS_EMAIL_PARAM].present?
+    order_json = %{{"ip":"#{request.ip}","timestamp":"#{Time.now.to_i}","email":#{params[USERS_EMAIL_PARAM].to_json}}}
 
     if queue_is_open?
       Resque.enqueue(TicketsQueue, order_json)
