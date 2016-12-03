@@ -68,7 +68,7 @@ class MidburnQueue < Sinatra::Base
   end
 
   post "#{REGISTER_ROUTE}" do
-    halt(400) unless params[USERS_EMAIL_PARAM].present?
+    halt(400) unless params[USERS_EMAIL_PARAM]
     order_json = %{{"ip":"#{request.ip}","timestamp":"#{Time.now.to_i}","email":#{params[USERS_EMAIL_PARAM].to_json}}}
 
     if queue_is_open?
