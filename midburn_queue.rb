@@ -34,8 +34,9 @@ class MidburnQueue < Sinatra::Base
   end 
 
   def access_log
-    ip = self.env["HTTP_X_FORWARDED_FOR"] || self.env["REMOTE_ADDR"]
-    puts "[access log] #{self.env["REQUEST_METHOD"]} #{self.env["REQUEST_PATH"]} from #{ip}: #{params}"
+    ip     = self.env["HTTP_X_FORWARDED_FOR"] 
+    remote = self.env["REMOTE_ADDR"]
+    puts "[access log] #{self.env["REQUEST_METHOD"]} #{self.env["REQUEST_PATH"]} from #{ip}||#{remote}: #{params}"
   end
 
   def set_response_headers
